@@ -12,7 +12,13 @@ test('drag on desktop is off by default', () => {
 });
 
 test('saved values are kept, unknown keys and wrong types are dropped', () => {
-	assert.deepEqual(mergeSettings({ dragOnDesktop: true, extra: 1 }), { dragOnDesktop: true, pasteLists: true });
+	assert.deepEqual(mergeSettings({ dragOnDesktop: true, extra: 1 }), { dragOnDesktop: true, handleSide: 'start', pasteLists: true });
 	assert.equal(mergeSettings({ pasteLists: false }).pasteLists, false);
 	assert.deepEqual(mergeSettings({ dragOnDesktop: 'yes' }), DEFAULT_SETTINGS);
+});
+
+test('handle side is the start by default and keeps only known values', () => {
+	assert.equal(DEFAULT_SETTINGS.handleSide, 'start');
+	assert.equal(mergeSettings({ handleSide: 'end' }).handleSide, 'end');
+	assert.equal(mergeSettings({ handleSide: 'middle' }).handleSide, 'start');
 });

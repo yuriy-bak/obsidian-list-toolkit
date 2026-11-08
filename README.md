@@ -24,6 +24,7 @@ More list tools will follow as separate features.
 ## Settings
 
 - **Drag list items on desktop:** off by default, since on desktop the Outliner plugin can already drag items with the mouse. When on, the handle works with the mouse the same way.
+- **Drag handle position:** start of the line (left of the list marker, default) or end of the line (right after its text).
 - **Fit pasted lists to the item:** on by default.
 
 ## Installation
