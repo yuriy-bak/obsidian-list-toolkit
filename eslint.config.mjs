@@ -1,0 +1,26 @@
+import { defineConfig } from "eslint/config";
+import obsidianmd from "eslint-plugin-obsidianmd";
+
+export default defineConfig([
+  {
+    ignores: [
+      "node_modules/",
+      ".test-build/",
+      "main.js",
+      "scripts/",
+      "tests/",
+      "esbuild.config.mjs",
+      "eslint.config.mjs"
+    ]
+  },
+  ...obsidianmd.configs.recommended,
+  {
+    files: ["**/*.ts"],
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname
+      }
+    }
+  }
+]);

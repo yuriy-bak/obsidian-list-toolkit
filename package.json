@@ -1,0 +1,40 @@
+{
+  "name": "obsidian-list-toolkit",
+  "version": "0.0.0",
+  "description": "Tools for Markdown lists. Drag list items and checkboxes with a finger on a phone, together with their sub-items.",
+  "license": "MIT",
+  "main": "main.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yuriy-bak/obsidian-list-toolkit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yuriy-bak/obsidian-list-toolkit/issues"
+  },
+  "homepage": "https://github.com/yuriy-bak/obsidian-list-toolkit#readme",
+  "scripts": {
+    "dev": "node esbuild.config.mjs --watch",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "build": "npm run typecheck && node esbuild.config.mjs --production",
+    "build:dev": "npm run typecheck && node esbuild.config.mjs",
+    "clean:test-build": "node scripts/clean-test-build.mjs",
+    "build:test": "npm run clean:test-build && tsc -p tsconfig.test.json",
+    "test": "npm run build:test && node --test \".test-build/tests/**/*.test.js\"",
+    "issue-form:versions": "node scripts/sync-issue-form-versions.mjs",
+    "release:bump": "node scripts/release-bump.mjs",
+    "readme:check": "node scripts/check-readme-whats-new.mjs"
+  },
+  "devDependencies": {
+    "@codemirror/state": "6.7.6",
+    "@codemirror/view": "6.43.13",
+    "@eslint/js": "^9.39.4",
+    "@types/node": "^22.15.17",
+    "esbuild": "0.28.2",
+    "eslint": "^9.39.4",
+    "eslint-plugin-obsidianmd": "^0.4.2",
+    "obsidian": "1.14.4",
+    "typescript": "5.9.3",
+    "typescript-eslint": "^8.60.0"
+  }
+}
