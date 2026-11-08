@@ -5,6 +5,9 @@ const EN = {
 	settingDragOnDesktop: 'Drag list items on desktop',
 	settingDragOnDesktopDesc:
 		'Show the drag handle with the mouse too. Off by default: on desktop, the Outliner plugin can already drag list items.',
+	settingPasteLists: 'Fit pasted lists to the item',
+	settingPasteListsDesc:
+		'A list pasted into an empty list item, or at the end of one, takes the level of that item; nesting is kept and indents follow the note.',
 	toggleFold: 'Fold or unfold',
 	copyBranch: 'Copy list item with sub-items',
 	deleteBranch: 'Delete list item with sub-items',
@@ -25,6 +28,9 @@ const RU: Strings = {
 	settingDragOnDesktop: 'Перетаскивание пунктов на компьютере',
 	settingDragOnDesktopDesc:
 		'Показывать ручку перетаскивания и для мыши. По умолчанию выключено: на компьютере пункты умеет перетаскивать плагин Outliner.',
+	settingPasteLists: 'Подгонять вставленный список под пункт',
+	settingPasteListsDesc:
+		'Список, вставленный в пустой пункт или в конец пункта, встаёт на его уровень; вложенность сохраняется, отступы — как в заметке.',
 	toggleFold: 'Свернуть или развернуть',
 	copyBranch: 'Скопировать пункт с подпунктами',
 	deleteBranch: 'Удалить пункт с подпунктами',

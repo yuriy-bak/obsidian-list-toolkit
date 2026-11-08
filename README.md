@@ -17,12 +17,14 @@ Outliner drags list items only on desktop; on a phone there are only the "Move u
 - **Drag list items:** put the cursor in a list item and a handle appears left of it. Drag the handle to move the item with all its sub-items and continuation lines; a line shows where it goes. Move the finger right or left to nest the item deeper or move it out, up to one level below the item above. The editor scrolls by itself near its top and bottom edges. Works with `-`, `*`, `+`, numbered items and checkboxes, tabs or spaces, in Live Preview and source mode. One undo brings everything back. To cancel, release on the original place or outside the editor, or touch the screen with a second finger. Lists inside callouts and quotes (`> - item`) work too. No handle in code blocks, frontmatter and tables. Obsidian renumbers numbered items by itself.
 - **Item menu:** a long press on the drag handle (right click on desktop) opens a menu: **Fold or unfold**, sorting (below), **Copy list item with sub-items** (without its outer indent), **Move list item with sub-items to another note** (pick a note; the item goes to its end at the top level) and **Delete list item with sub-items**. Copy, move and delete are also commands for the list item under the cursor, on any device.
 - **Sort and completed:** **Sort list items of this level** sorts the items of the same level as the item under the cursor (under the same parent, each with its sub-items) by their text, ignoring the marker, checkbox and case, with numbers by value. **Move completed items to the end** moves done (`[x]`) and cancelled (`[-]`) items below the others, keeping their order. Both are commands and entries of the item menu; one undo brings the order back.
+- **Paste a list:** paste a list into an empty list item, or at the end of one, and its top items take the level of that item; nesting is kept and indents follow the note (tabs or spaces). Pasting into an empty item replaces it; at the end of an item, the list goes on the lines below. Other pastes are left as they are.
 
 More list tools will follow as separate features.
 
 ## Settings
 
 - **Drag list items on desktop:** off by default, since on desktop the Outliner plugin can already drag items with the mouse. When on, the handle works with the mouse the same way.
+- **Fit pasted lists to the item:** on by default.
 
 
 ## Installation
