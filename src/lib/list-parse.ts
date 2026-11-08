@@ -60,3 +60,37 @@ export function indentWidth(indent: string, tabSize: number): number {
 export function isBlank(text: string): boolean {
 	return text.trim() === '';
 }
+
+const QUOTE_PREFIX = /^(?:[ \t]{0,3}>[ \t]?)+/;
+
+/** The `> ` prefix of a line in a quote or callout (`> > ` when nested), or an empty string. */
+export function quotePrefix(text: string): string {
+	return QUOTE_PREFIX.exec(text)?.[0] ?? '';
+}
+
+/** A line that is never part of a list: ends a list at a line outside the quote. */
+const OUTSIDE = '\u0000';
+
+/**
+ * The lines of a quote or callout without its `prefix`, so list logic works inside it as in plain text.
+ * Lines with another prefix read as an unindented paragraph, which ends the list there.
+ */
+export function unquotedLines(lines: Lines, prefix: string): Lines {
+	if (prefix === '') return lines;
+	const bare = prefix.trimEnd();
+	return {
+		count: lines.count,
+		get: (index) => {
+			const text = lines.get(index);
+			if (text.trimEnd() === bare) return '';
+			if (!text.startsWith(prefix) || quotePrefix(text) !== prefix) return OUTSIDE;
+			return text.slice(prefix.length);
+		},
+	};
+}
+
+/** Puts the quote `prefix` back on a line produced from `unquotedLines`. */
+export function requote(text: string, prefix: string): string {
+	if (prefix === '') return text;
+	return text === '' ? prefix.trimEnd() : prefix + text;
+}

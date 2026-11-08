@@ -2,7 +2,7 @@ import { syntaxTree } from '@codemirror/language';
 import { EditorState, Line } from '@codemirror/state';
 import { EditorView, PluginValue, ViewPlugin, ViewUpdate } from '@codemirror/view';
 import { setIcon } from 'obsidian';
-import { parseListItem } from '../../lib/list-parse';
+import { parseListItem, quotePrefix } from '../../lib/list-parse';
 import { t } from '../../i18n';
 import { DragSession, toScroller } from './drag';
 
@@ -10,15 +10,17 @@ import { DragSession, toScroller } from './drag';
 export const HANDLE_SIZE = 32;
 
 /** Syntax nodes of Obsidian's Markdown parser where list items are not dragged. */
-const EXCLUDED_NODES = /codeblock|frontmatter|math|table|quote|comment/i;
+const EXCLUDED_NODES = /codeblock|frontmatter|math|table|comment/i;
+/** Outside quotes and callouts, a quote node means the list is not ours to parse (lazy continuation). */
+const QUOTE_NODE = /quote/i;
 
-function insideExcludedBlock(state: EditorState, line: Line): boolean {
+function insideExcludedBlock(state: EditorState, line: Line, quoted: boolean): boolean {
 	let excluded = false;
 	syntaxTree(state).iterate({
 		from: line.from,
 		to: Math.max(line.from + 1, line.to),
 		enter: (node) => {
-			if (EXCLUDED_NODES.test(node.name)) excluded = true;
+			if (EXCLUDED_NODES.test(node.name) || (!quoted && QUOTE_NODE.test(node.name))) excluded = true;
 			return !excluded;
 		},
 	});
@@ -30,8 +32,9 @@ export function handleLine(state: EditorState): Line | null {
 	const selection = state.selection.main;
 	if (!selection.empty) return null;
 	const line = state.doc.lineAt(selection.head);
-	const item = parseListItem(line.text, state.tabSize);
-	if (!item || insideExcludedBlock(state, line)) return null;
+	const prefix = quotePrefix(line.text);
+	const item = parseListItem(line.text.slice(prefix.length), state.tabSize);
+	if (!item || insideExcludedBlock(state, line, prefix !== '')) return null;
 	return line;
 }
 
@@ -151,8 +154,9 @@ export class HandleView implements PluginValue {
 	private measure(view: EditorView): HandlePlace | null {
 		const line = handleLine(view.state);
 		if (!line) return null;
-		const item = parseListItem(line.text, view.state.tabSize);
-		const coords = view.coordsAtPos(line.from + (item?.indent.length ?? 0), 1);
+		const prefix = quotePrefix(line.text);
+		const item = parseListItem(line.text.slice(prefix.length), view.state.tabSize);
+		const coords = view.coordsAtPos(line.from + prefix.length + (item?.indent.length ?? 0), 1);
 		if (!coords) return null;
 		const point = toScroller(view, coords.left, (coords.top + coords.bottom) / 2);
 		return {
