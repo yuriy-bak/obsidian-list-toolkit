@@ -79,39 +79,55 @@ export function siblingsOf(branch: Branch): ModelItem[] {
 	return result;
 }
 
+/** `-`, `*`, `+` or numbered: a change of marker kind starts a new list, as in Markdown. */
+function markerKind(item: ModelItem): string {
+	return item.ordered ? item.marker.slice(-1) : item.marker;
+}
+
 /**
- * Puts the sibling items (each with its sub-items) in the order `order` returns, as indexes into `siblings`.
- * Blank lines between items stay where they are. Null if a non-blank line sits between two items.
+ * Puts the sibling items (each with its sub-items) in the order `order` returns, as indexes into the siblings.
+ * Only the items of the same list are reordered: a blank line between two siblings, or a change of marker kind,
+ * starts another list. Null if a non-blank line that belongs to no sibling sits between two of them.
  */
 export function reorderSiblings(branch: Branch, order: (siblings: ModelItem[]) => number[]): Reorder | null {
-	const siblings = siblingsOf(branch);
-	const blocks: LineRange[] = [];
-	for (const item of siblings) {
+	const all = siblingsOf(branch);
+	const allBlocks: LineRange[] = [];
+	for (const item of all) {
 		const block = findBlock(branch.lines, branch.model, item.line);
 		if (!block) return null;
-		blocks.push(block);
+		allBlocks.push(block);
 	}
-	const gaps: string[][] = [];
-	for (let index = 0; index + 1 < blocks.length; index++) {
-		const gap: string[] = [];
-		for (let line = blocks[index]!.end; line < blocks[index + 1]!.start; line++) {
-			const text = branch.lines.get(line);
-			if (text.trim() !== '') return null;
-			gap.push(text);
+	// The run of siblings around the branch item that is not split by blank lines or a marker change.
+	const own = all.indexOf(branch.item);
+	const separated = (index: number): boolean => {
+		const a = all[index]!;
+		const b = all[index + 1]!;
+		if (markerKind(a) !== markerKind(b)) return true;
+		for (let line = allBlocks[index]!.end; line < allBlocks[index + 1]!.start; line++) {
+			if (branch.lines.get(line).trim() === '') return true;
 		}
-		gaps.push(gap);
+		return false;
+	};
+	let first = own;
+	while (first > 0 && !separated(first - 1)) first--;
+	let last = own;
+	while (last + 1 < all.length && !separated(last)) last++;
+	const siblings = all.slice(first, last + 1);
+	const blocks = allBlocks.slice(first, last + 1);
+
+	for (let index = 0; index + 1 < blocks.length; index++) {
+		if (blocks[index]!.end !== blocks[index + 1]!.start) return null;
 	}
 	const sequence = order(siblings);
 	const from = blocks[0]!.start;
 	const to = blocks[blocks.length - 1]!.end;
 	const lines: string[] = [];
 	const newStart = new Map<number, number>();
-	sequence.forEach((blockIndex, position) => {
+	for (const blockIndex of sequence) {
 		const block = blocks[blockIndex]!;
 		newStart.set(blockIndex, from + lines.length);
 		for (let line = block.start; line < block.end; line++) lines.push(branch.lines.get(line));
-		lines.push(...(gaps[position] ?? []));
-	});
+	}
 	return {
 		from,
 		to,

@@ -43,14 +43,28 @@ test('sorting a nested level touches only that parent', () => {
 });
 
 test('checkbox and marker are ignored when sorting', () => {
-	const note = ['- [x] b', '- [ ] c', '1. a'];
-	assert.deepEqual(apply(note, 0, sortSiblings)?.note, ['1. a', '- [x] b', '- [ ] c']);
+	const note = ['- [x] b', '- [ ] c', '- a'];
+	assert.deepEqual(apply(note, 0, sortSiblings)?.note, ['- a', '- [x] b', '- [ ] c']);
 });
 
-test('completed items go to the end, order kept, blank lines stay', () => {
-	const note = ['- [x] one', '- [ ] two', '', '- [-] three', '\t- sub', '- [ ] four'];
+test('completed items go to the end, order kept', () => {
+	const note = ['- [x] one', '- [ ] two', '- [-] three', '\t- sub', '- [ ] four'];
 	const done = apply(note, 1, completedToEnd)!;
-	assert.deepEqual(done.note, ['- [ ] two', '- [ ] four', '', '- [x] one', '- [-] three', '\t- sub']);
+	assert.deepEqual(done.note, ['- [ ] two', '- [ ] four', '- [x] one', '- [-] three', '\t- sub']);
+});
+
+test('a blank line between items separates two lists: only the list of the cursor changes', () => {
+	const note = ['- [x] a1', '- [ ] a2', '', '- [x] b1', '- [ ] b2', '- c'];
+	assert.deepEqual(apply(note, 4, completedToEnd)?.note, ['- [x] a1', '- [ ] a2', '', '- [ ] b2', '- c', '- [x] b1']);
+	assert.deepEqual(apply(note, 0, completedToEnd)?.note, ['- [ ] a2', '- [x] a1', '', '- [x] b1', '- [ ] b2', '- c']);
+	const sorted = apply(['- z', '- y', '', '- b', '- a'], 0, sortSiblings)!;
+	assert.deepEqual(sorted.note, ['- y', '- z', '', '- b', '- a']);
+});
+
+test('a change of marker kind separates two lists', () => {
+	const note = ['- b', '- a', '1. z', '2. y'];
+	assert.deepEqual(apply(note, 0, sortSiblings)?.note, ['- a', '- b', '1. z', '2. y']);
+	assert.deepEqual(apply(note, 3, sortSiblings)?.note, ['- b', '- a', '2. y', '1. z']);
 });
 
 test('a text line of the parent between items blocks reordering', () => {
