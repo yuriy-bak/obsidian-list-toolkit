@@ -1,11 +1,12 @@
 import { Plugin } from 'obsidian';
 import { BranchActions, branchActionsFeature } from './features/branch-actions';
 import { dragItemsFeature } from './features/drag-items';
+import { pasteListsFeature } from './features/paste-lists';
 import type { Feature } from './features/feature';
 import { ListToolkitSettings, mergeSettings } from './settings';
 import { ListToolkitSettingTab } from './settings-tab';
 
-const FEATURES: readonly Feature[] = [dragItemsFeature, branchActionsFeature];
+const FEATURES: readonly Feature[] = [dragItemsFeature, branchActionsFeature, pasteListsFeature];
 
 export default class ListToolkitPlugin extends Plugin {
 	settings!: ListToolkitSettings;

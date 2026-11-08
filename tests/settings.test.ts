@@ -12,6 +12,7 @@ test('drag on desktop is off by default', () => {
 });
 
 test('saved values are kept, unknown keys and wrong types are dropped', () => {
-	assert.deepEqual(mergeSettings({ dragOnDesktop: true, extra: 1 }), { dragOnDesktop: true });
+	assert.deepEqual(mergeSettings({ dragOnDesktop: true, extra: 1 }), { dragOnDesktop: true, pasteLists: true });
+	assert.equal(mergeSettings({ pasteLists: false }).pasteLists, false);
 	assert.deepEqual(mergeSettings({ dragOnDesktop: 'yes' }), DEFAULT_SETTINGS);
 });

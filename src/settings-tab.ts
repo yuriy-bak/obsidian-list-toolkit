@@ -15,6 +15,11 @@ export class ListToolkitSettingTab extends PluginSettingTab {
 				desc: t('settingDragOnDesktopDesc'),
 				control: { type: 'toggle', key: 'dragOnDesktop', defaultValue: DEFAULT_SETTINGS.dragOnDesktop },
 			},
+			{
+				name: t('settingPasteLists'),
+				desc: t('settingPasteListsDesc'),
+				control: { type: 'toggle', key: 'pasteLists', defaultValue: DEFAULT_SETTINGS.pasteLists },
+			},
 		];
 	}
 
@@ -23,8 +28,8 @@ export class ListToolkitSettingTab extends PluginSettingTab {
 	}
 
 	async setControlValue(key: string, value: unknown): Promise<void> {
-		if (key === 'dragOnDesktop' && typeof value === 'boolean') {
-			this.plugin.settings.dragOnDesktop = value;
+		if ((key === 'dragOnDesktop' || key === 'pasteLists') && typeof value === 'boolean') {
+			this.plugin.settings[key] = value;
 			await this.plugin.saveSettings();
 		}
 	}
