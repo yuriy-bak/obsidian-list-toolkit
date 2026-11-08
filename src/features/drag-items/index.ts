@@ -1,5 +1,5 @@
 import type { Extension } from '@codemirror/state';
-import { Platform } from 'obsidian';
+import { editorInfoField, Menu, Platform } from 'obsidian';
 import type { Feature } from '../feature';
 import { dragItemsExtension } from './extension';
 
@@ -12,9 +12,16 @@ export const dragItemsFeature: Feature = {
 	load(plugin) {
 		// Obsidian reads this array again on updateOptions(), so the setting applies without a restart.
 		const extensions: Extension[] = [];
+		const extension = dragItemsExtension((view, at) => {
+			const info = view.state.field(editorInfoField, false);
+			if (!info?.editor) return;
+			const menu = new Menu();
+			plugin.branchActions.fillMenu(menu, info.editor, info);
+			menu.showAtPosition(at);
+		});
 		const refresh = () => {
 			extensions.length = 0;
-			if (Platform.isMobile || plugin.settings.dragOnDesktop) extensions.push(dragItemsExtension());
+			if (Platform.isMobile || plugin.settings.dragOnDesktop) extensions.push(extension);
 			plugin.app.workspace.updateOptions();
 		};
 		plugin.registerEditorExtension(extensions);

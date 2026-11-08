@@ -184,7 +184,7 @@ export function targetIndent(model: ListModel, block: LineRange, gap: number, le
 	return top ? top.indent : '';
 }
 
-function reindentLine(text: string, from: string, to: string, unit: string, tabSize: number): string {
+export function reindentLine(text: string, from: string, to: string, unit: string, tabSize: number): string {
 	if (isBlank(text)) return text;
 	if (text.startsWith(from)) return to + text.slice(from.length);
 	// An indent that does not start with the item's (mixed tabs and spaces): keep its width.

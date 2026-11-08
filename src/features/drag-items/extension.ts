@@ -1,8 +1,8 @@
 import type { Extension } from '@codemirror/state';
 import { draggedLinesField } from './drag';
-import { handlePlugin } from './handle';
+import { handleMenu, HandleMenuOpener, handlePlugin } from './handle';
 
-/** The CodeMirror extensions of the feature. */
-export function dragItemsExtension(): Extension {
-	return [draggedLinesField, handlePlugin];
+/** The CodeMirror extensions of the feature. `openMenu` shows the branch menu on a long press of the handle. */
+export function dragItemsExtension(openMenu?: HandleMenuOpener): Extension {
+	return [draggedLinesField, handlePlugin, openMenu ? handleMenu.of(openMenu) : []];
 }
