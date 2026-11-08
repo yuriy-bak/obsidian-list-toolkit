@@ -1,1 +1,33 @@
-/* List Toolkit. Use Obsidian CSS variables so the plugin fits light and dark themes. */
+/* List Toolkit. Colors come from Obsidian CSS variables, so the plugin fits light and dark themes. */
+
+.list-toolkit-handle {
+	position: absolute;
+	top: var(--list-toolkit-handle-top, 0);
+	left: var(--list-toolkit-handle-left, 0);
+	z-index: 5;
+	display: none;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	color: var(--text-faint);
+	cursor: grab;
+	touch-action: none;
+	user-select: none;
+	-webkit-user-select: none;
+	-webkit-touch-callout: none;
+}
+
+.list-toolkit-handle.is-visible {
+	display: flex;
+}
+
+.list-toolkit-handle svg {
+	width: var(--icon-s);
+	height: var(--icon-s);
+}
+
+.list-toolkit-handle:hover,
+.list-toolkit-handle.is-active {
+	color: var(--interactive-accent);
+}

@@ -7,6 +7,7 @@ const FEATURES: readonly Feature[] = [dragItemsFeature];
 
 export default class ListToolkitPlugin extends Plugin {
 	settings!: ListToolkitSettings;
+	private settingsListeners: Array<() => void> = [];
 
 	async onload(): Promise<void> {
 		await this.loadSettings();
@@ -19,5 +20,11 @@ export default class ListToolkitPlugin extends Plugin {
 
 	async saveSettings(): Promise<void> {
 		await this.saveData(this.settings);
+		for (const listener of this.settingsListeners) listener();
+	}
+
+	/** Calls `listener` after every settings change. */
+	onSettingsChange(listener: () => void): void {
+		this.settingsListeners.push(listener);
 	}
 }
