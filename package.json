@@ -26,6 +26,7 @@
     "readme:check": "node scripts/check-readme-whats-new.mjs"
   },
   "devDependencies": {
+    "@codemirror/language": "^6.11.3",
     "@codemirror/state": "6.7.6",
     "@codemirror/view": "6.43.13",
     "@eslint/js": "^9.39.4",
