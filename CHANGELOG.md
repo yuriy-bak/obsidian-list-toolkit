@@ -8,5 +8,6 @@
 - **Sort list items of this level** and **Move completed items to the end** (done `[x]` and cancelled `[-]`): commands and entries of the item menu. They reorder the items of the cursor item's level under the same parent, each with its sub-items, in one change. A blank line or a change of marker (`-` / `1.`) between items starts another list, which stays as it is.
 - A list pasted into an empty list item, or at the end of one, takes the level of that item: nesting is kept, indents follow the note (tabs or spaces). Setting **Fit pasted lists to the item**, on by default.
 - Setting **Drag list items on desktop** (off by default): the same handle works with the mouse.
+- Setting **Drag handle position**: at the start of the line (default) or right after its end.
 - Internal: project skeleton from the Obsidian sample plugin; CI, beta and release workflows, READMEs in English and Russian.
 - Internal: list line parsing and the move logic (which block moves, where it may go, how its indent changes), with unit tests.

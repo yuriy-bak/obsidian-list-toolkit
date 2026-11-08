@@ -13,6 +13,16 @@ export const handleMenu = Facet.define<HandleMenuOpener, HandleMenuOpener | null
 	combine: (values) => values[0] ?? null,
 });
 
+/** Where the handle stands: left of the list marker or right after the end of the line. */
+export type HandleSide = 'start' | 'end';
+
+export const handleSide = Facet.define<HandleSide, HandleSide>({
+	combine: (values) => values[0] ?? 'start',
+});
+
+/** Space between the end of the line text and the handle, px. */
+const END_GAP = 4;
+
 /** A touch held this long without moving opens the menu, ms. */
 const LONG_PRESS = 500;
 
@@ -55,7 +65,7 @@ interface HandlePlace {
 }
 
 /**
- * Draws the drag handle left of the list marker of the cursor line. The handle is an absolutely positioned
+ * Draws the drag handle left of the list marker of the cursor line (or after its end, see `handleSide`). The handle is an absolutely positioned
  * element in the scroll container, not a widget inside the line: Live Preview replaces list markers with
  * its own widgets, and anything inserted into the line would shift the text.
  */
@@ -177,7 +187,8 @@ export class HandleView implements PluginValue {
 			this.session.cancel();
 		}
 		if (this.frozen) return;
-		if (update.selectionSet || update.docChanged || update.geometryChanged || update.viewportChanged) {
+		const sideChanged = update.startState.facet(handleSide) !== update.state.facet(handleSide);
+		if (sideChanged || update.selectionSet || update.docChanged || update.geometryChanged || update.viewportChanged) {
 			this.schedule();
 		}
 	}
@@ -193,6 +204,14 @@ export class HandleView implements PluginValue {
 	private measure(view: EditorView): HandlePlace | null {
 		const line = handleLine(view.state);
 		if (!line) return null;
+		if (view.state.facet(handleSide) === 'end') {
+			const coords = view.coordsAtPos(line.to, -1);
+			if (!coords) return null;
+			const point = toScroller(view, coords.right + END_GAP, (coords.top + coords.bottom) / 2);
+			// A line that runs to the right edge keeps the handle inside the editor, over its last characters.
+			const maxLeft = view.scrollDOM.scrollLeft + view.scrollDOM.clientWidth - HANDLE_SIZE;
+			return { line: line.number, top: point.y - HANDLE_SIZE / 2, left: Math.max(0, Math.min(point.x, maxLeft)) };
+		}
 		const prefix = quotePrefix(line.text);
 		const item = parseListItem(line.text.slice(prefix.length), view.state.tabSize);
 		const coords = view.coordsAtPos(line.from + prefix.length + (item?.indent.length ?? 0), 1);

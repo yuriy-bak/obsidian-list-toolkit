@@ -5,6 +5,10 @@ const EN = {
 	settingDragOnDesktop: 'Drag list items on desktop',
 	settingDragOnDesktopDesc:
 		'Show the drag handle with the mouse too. Off by default: on desktop, the Outliner plugin can already drag list items.',
+	settingHandleSide: 'Drag handle position',
+	settingHandleSideDesc: 'Before the list marker, or after the end of the line.',
+	handleSideStart: 'Start of the line',
+	handleSideEnd: 'End of the line',
 	settingPasteLists: 'Fit pasted lists to the item',
 	settingPasteListsDesc:
 		'A list pasted into an empty list item, or at the end of one, takes the level of that item; nesting is kept and indents follow the note.',
@@ -28,6 +32,10 @@ const RU: Strings = {
 	settingDragOnDesktop: 'Перетаскивание пунктов на компьютере',
 	settingDragOnDesktopDesc:
 		'Показывать ручку перетаскивания и для мыши. По умолчанию выключено: на компьютере пункты умеет перетаскивать плагин Outliner.',
+	settingHandleSide: 'Где ручка перетаскивания',
+	settingHandleSideDesc: 'Перед маркером списка или после конца строки.',
+	handleSideStart: 'В начале строки',
+	handleSideEnd: 'В конце строки',
 	settingPasteLists: 'Подгонять вставленный список под пункт',
 	settingPasteListsDesc:
 		'Список, вставленный в пустой пункт или в конец пункта, встаёт на его уровень; вложенность сохраняется, отступы — как в заметке.',
