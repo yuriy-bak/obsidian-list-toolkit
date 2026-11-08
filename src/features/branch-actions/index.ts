@@ -1,5 +1,6 @@
 import { App, Editor, FuzzySuggestModal, MarkdownFileInfo, Menu, Notice, TFile } from 'obsidian';
-import { appendBranch, Branch, branchAt, branchText } from '../../lib/branch';
+import { appendBranch, Branch, branchAt, branchText, completedToEnd, Reorder, sortSiblings } from '../../lib/branch';
+import { requote } from '../../lib/list-parse';
 import { editorIndent, editorLines, wholeLines } from '../../editor-lines';
 import { t } from '../../i18n';
 import type ListToolkitPlugin from '../../main';
@@ -17,6 +18,30 @@ function cursorBranch(app: App, editor: Editor, line = editor.getCursor().line):
 function deleteBranch(editor: Editor, branch: Branch): void {
 	const range = wholeLines(editor, branch.block.start, branch.block.end);
 	editor.transaction({ changes: [{ ...range, text: '' }] });
+}
+
+/** Applies a reorder of sibling items as one change and keeps the cursor on its item. */
+function applyReorder(editor: Editor, branch: Branch, reorder: Reorder | null): void {
+	if (!reorder) {
+		new Notice(t('cannotReorder'));
+		return;
+	}
+	if (!reorder.changed) {
+		new Notice(t('alreadyInOrder'));
+		return;
+	}
+	const cursor = editor.getCursor();
+	const last = reorder.to - 1;
+	editor.transaction({
+		changes: [
+			{
+				from: { line: reorder.from, ch: 0 },
+				to: { line: last, ch: editor.getLine(last).length },
+				text: reorder.lines.map((line) => requote(line, branch.prefix)).join('\n'),
+			},
+		],
+		selection: { from: { line: reorder.moveLine(cursor.line), ch: cursor.ch } },
+	});
 }
 
 async function copyBranch(branch: Branch): Promise<void> {
@@ -87,6 +112,17 @@ export class BranchActions {
 		menu.addItem((item) =>
 			item.setTitle(t('moveBranch')).setIcon('file-output').onClick(() => moveBranchToNote(this.app, editor, info)),
 		);
+		menu.addSeparator();
+		menu.addItem((item) =>
+			item.setTitle(t('sortItems')).setIcon('arrow-down-a-z').onClick(() => applyReorder(editor, branch, sortSiblings(branch))),
+		);
+		menu.addItem((item) =>
+			item
+				.setTitle(t('completedToEnd'))
+				.setIcon('list-checks')
+				.onClick(() => applyReorder(editor, branch, completedToEnd(branch))),
+		);
+		menu.addSeparator();
 		menu.addItem((item) =>
 			item
 				.setTitle(t('deleteBranch'))
@@ -113,6 +149,16 @@ export class BranchActions {
 			id: 'delete-branch',
 			name: t('deleteBranch'),
 			editorCheckCallback: withBranch((editor, _info, branch) => deleteBranch(editor, branch)),
+		});
+		plugin.addCommand({
+			id: 'sort-items',
+			name: t('sortItems'),
+			editorCheckCallback: withBranch((editor, _info, branch) => applyReorder(editor, branch, sortSiblings(branch))),
+		});
+		plugin.addCommand({
+			id: 'completed-to-end',
+			name: t('completedToEnd'),
+			editorCheckCallback: withBranch((editor, _info, branch) => applyReorder(editor, branch, completedToEnd(branch))),
 		});
 		plugin.addCommand({
 			id: 'move-branch-to-note',

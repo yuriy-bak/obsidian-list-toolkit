@@ -12,6 +12,10 @@ const EN = {
 	pickNote: 'Note to move the list item to',
 	copied: 'List item copied',
 	movedTo: 'Moved to {note}',
+	sortItems: 'Sort list items of this level',
+	completedToEnd: 'Move completed items to the end',
+	cannotReorder: 'Text between the list items: nothing was changed',
+	alreadyInOrder: 'Already in order',
 };
 
 type Strings = typeof EN;
@@ -28,6 +32,10 @@ const RU: Strings = {
 	pickNote: 'Заметка, куда перенести пункт',
 	copied: 'Пункт скопирован',
 	movedTo: 'Перенесено в {note}',
+	sortItems: 'Отсортировать пункты этого уровня',
+	completedToEnd: 'Выполненные пункты в конец',
+	cannotReorder: 'Между пунктами есть текст: ничего не изменено',
+	alreadyInOrder: 'Порядок уже такой',
 };
 
 export function t(key: keyof Strings): string {

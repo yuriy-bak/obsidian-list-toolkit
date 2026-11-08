@@ -53,3 +53,105 @@ export function appendBranch(content: string, text: string): string {
 	return `${trimmed}${inList ? '\n' : '\n\n'}${text}\n`;
 }
 
+
+/** Lines `from`…`to - 1` replaced by `lines`; `moveLine` tells where a line of a reordered item ends up. */
+export interface Reorder {
+	from: number;
+	to: number;
+	lines: string[];
+	moveLine(line: number): number;
+	changed: boolean;
+}
+
+/** The items of the same level as the branch under the same parent, in order. */
+export function siblingsOf(branch: Branch): ModelItem[] {
+	const { items } = branch.model;
+	const index = items.indexOf(branch.item);
+	const level = branch.item.level;
+	let first = index;
+	while (first > 0 && (items[first - 1]?.level ?? -1) >= level) first--;
+	const result: ModelItem[] = [];
+	for (let at = first; at < items.length; at++) {
+		const item = items[at];
+		if (!item || item.level < level) break;
+		if (item.level === level) result.push(item);
+	}
+	return result;
+}
+
+/**
+ * Puts the sibling items (each with its sub-items) in the order `order` returns, as indexes into `siblings`.
+ * Blank lines between items stay where they are. Null if a non-blank line sits between two items.
+ */
+export function reorderSiblings(branch: Branch, order: (siblings: ModelItem[]) => number[]): Reorder | null {
+	const siblings = siblingsOf(branch);
+	const blocks: LineRange[] = [];
+	for (const item of siblings) {
+		const block = findBlock(branch.lines, branch.model, item.line);
+		if (!block) return null;
+		blocks.push(block);
+	}
+	const gaps: string[][] = [];
+	for (let index = 0; index + 1 < blocks.length; index++) {
+		const gap: string[] = [];
+		for (let line = blocks[index]!.end; line < blocks[index + 1]!.start; line++) {
+			const text = branch.lines.get(line);
+			if (text.trim() !== '') return null;
+			gap.push(text);
+		}
+		gaps.push(gap);
+	}
+	const sequence = order(siblings);
+	const from = blocks[0]!.start;
+	const to = blocks[blocks.length - 1]!.end;
+	const lines: string[] = [];
+	const newStart = new Map<number, number>();
+	sequence.forEach((blockIndex, position) => {
+		const block = blocks[blockIndex]!;
+		newStart.set(blockIndex, from + lines.length);
+		for (let line = block.start; line < block.end; line++) lines.push(branch.lines.get(line));
+		lines.push(...(gaps[position] ?? []));
+	});
+	return {
+		from,
+		to,
+		lines,
+		changed: sequence.some((blockIndex, position) => blockIndex !== position),
+		moveLine: (line) => {
+			const index = blocks.findIndex((block) => line >= block.start && line < block.end);
+			return index === -1 ? line : (newStart.get(index) ?? line) + line - blocks[index]!.start;
+		},
+	};
+}
+
+const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+
+function itemText(branch: Branch, item: ModelItem): string {
+	return branch.lines.get(item.line).slice(item.contentStart).trim();
+}
+
+/** Sorted by item text without the marker and checkbox, ignoring case, numbers by value; stable. */
+export function sortSiblings(branch: Branch): Reorder | null {
+	return reorderSiblings(branch, (siblings) =>
+		siblings
+			.map((item, index) => ({ index, text: itemText(branch, item) }))
+			.sort((a, b) => collator.compare(a.text, b.text) || a.index - b.index)
+			.map(({ index }) => index),
+	);
+}
+
+/** Done (`[x]`) and cancelled (`[-]`) items. */
+export function isCompleted(item: ModelItem): boolean {
+	return item.checkbox !== null && /[xX-]/.test(item.checkbox);
+}
+
+/** Completed items go after the others; the order inside both groups stays. */
+export function completedToEnd(branch: Branch): Reorder | null {
+	return reorderSiblings(branch, (siblings) => {
+		const indexes = siblings.map((_item, index) => index);
+		return [
+			...indexes.filter((index) => !isCompleted(siblings[index]!)),
+			...indexes.filter((index) => isCompleted(siblings[index]!)),
+		];
+	});
+}
