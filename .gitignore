@@ -1,1 +1,33 @@
+# dependencies
+node_modules/
+
+# build output
+main.js
+*.js.map
+meta.json
+.test-build/
+*.tsbuildinfo
+
+# logs
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Obsidian
+.obsidian/
+data.json
+
+# dotenv / local secrets
 .env
+.env.*
+
+# temporary files
+tmp/
+*.tmp
+*.zip
