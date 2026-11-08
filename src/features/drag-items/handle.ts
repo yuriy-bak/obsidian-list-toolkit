@@ -1,10 +1,20 @@
 import { syntaxTree } from '@codemirror/language';
-import { EditorState, Line } from '@codemirror/state';
+import { EditorState, Facet, Line } from '@codemirror/state';
 import { EditorView, PluginValue, ViewPlugin, ViewUpdate } from '@codemirror/view';
 import { setIcon } from 'obsidian';
 import { parseListItem, quotePrefix } from '../../lib/list-parse';
 import { t } from '../../i18n';
 import { DragSession, toScroller } from './drag';
+
+/** Opens the menu of the list item at the cursor, at a point in viewport coordinates. */
+export type HandleMenuOpener = (view: EditorView, at: { x: number; y: number }) => void;
+
+export const handleMenu = Facet.define<HandleMenuOpener, HandleMenuOpener | null>({
+	combine: (values) => values[0] ?? null,
+});
+
+/** A touch held this long without moving opens the menu, ms. */
+const LONG_PRESS = 500;
 
 /** Size of the touch area of the handle, px. The icon inside is smaller. */
 export const HANDLE_SIZE = 32;
@@ -57,6 +67,8 @@ export class HandleView implements PluginValue {
 	frozen = false;
 	private session: DragSession | null = null;
 	private pointerId: number | null = null;
+	private pointerType = '';
+	private longPress = 0;
 
 	constructor(readonly view: EditorView) {
 		this.dom = view.scrollDOM.createDiv({ cls: 'list-toolkit-handle', attr: { 'aria-label': t('dragHandle') } });
@@ -67,9 +79,10 @@ export class HandleView implements PluginValue {
 		this.dom.addEventListener('pointercancel', this.onCancel);
 		this.dom.addEventListener('lostpointercapture', this.onCancel);
 		// Keep the editor from taking focus (and the phone from opening the keyboard) on a touch of the handle.
-		for (const type of ['mousedown', 'touchstart', 'contextmenu'] as const) {
+		for (const type of ['mousedown', 'touchstart'] as const) {
 			this.dom.addEventListener(type, this.swallow, { passive: false });
 		}
+		this.dom.addEventListener('contextmenu', this.onContextMenu);
 		this.schedule();
 	}
 
@@ -80,11 +93,21 @@ export class HandleView implements PluginValue {
 
 	private readonly onPointerDown = (event: PointerEvent): void => {
 		this.swallow(event);
+		this.pointerType = event.pointerType;
 		if (this.session || this.line === null || event.button > 0) return;
 		const session = DragSession.start(this.view, this.line - 1, event, () => this.endSession());
 		if (!session) return;
 		this.session = session;
 		this.pointerId = event.pointerId;
+		if (event.pointerType !== 'mouse') {
+			this.longPress = this.view.dom.win.setTimeout(() => {
+				if (this.session && !this.session.isStarted) {
+					this.session.cancel();
+					if (typeof navigator.vibrate === 'function') navigator.vibrate(10);
+					this.openMenu();
+				}
+			}, LONG_PRESS);
+		}
 		this.frozen = true;
 		this.dom.addClass('is-active');
 		this.dom.setPointerCapture(event.pointerId);
@@ -109,6 +132,21 @@ export class HandleView implements PluginValue {
 		this.session?.cancel();
 	};
 
+	/** Right click on desktop; a long touch is handled by the timer, so the browser's own long-press menu is ignored. */
+	private readonly onContextMenu = (event: MouseEvent): void => {
+		this.swallow(event);
+		if (this.pointerType !== 'mouse' && this.pointerType !== '') return;
+		this.session?.cancel();
+		this.openMenu();
+	};
+
+	private openMenu(): void {
+		const open = this.view.state.facet(handleMenu);
+		if (!open || this.line === null) return;
+		const box = this.dom.getBoundingClientRect();
+		open(this.view, { x: box.left, y: box.bottom });
+	}
+
 	private readonly onOtherPointer = (event: PointerEvent): void => {
 		if (event.pointerId !== this.pointerId) this.session?.cancel();
 	};
@@ -120,6 +158,7 @@ export class HandleView implements PluginValue {
 	};
 
 	private endSession(): void {
+		this.view.dom.win.clearTimeout(this.longPress);
 		activeDocument.removeEventListener('pointerdown', this.onOtherPointer, true);
 		activeDocument.removeEventListener('keydown', this.onKey, true);
 		if (this.pointerId !== null && this.dom.hasPointerCapture(this.pointerId)) {

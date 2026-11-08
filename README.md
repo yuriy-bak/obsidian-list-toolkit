@@ -20,6 +20,8 @@ Outliner drags list items only on desktop; on a phone there are only the "Move u
 
 - **Drag list items on desktop:** off by default, since on desktop the Outliner plugin can already drag items with the mouse. When on, the handle works with the mouse the same way.
 
+- **Item menu:** a long press on the drag handle (right click on desktop) opens a menu: **Fold or unfold**, **Copy list item with sub-items** (without its outer indent), **Move list item with sub-items to another note** (pick a note; the item goes to its end at the top level) and **Delete list item with sub-items**. Copy, move and delete are also commands for the list item under the cursor, on any device.
+
 More list tools will follow as separate features.
 
 ## Installation
