@@ -2,6 +2,7 @@ import { Plugin } from 'obsidian';
 import { dragItemsFeature } from './features/drag-items';
 import type { Feature } from './features/feature';
 import { ListToolkitSettings, mergeSettings } from './settings';
+import { ListToolkitSettingTab } from './settings-tab';
 
 const FEATURES: readonly Feature[] = [dragItemsFeature];
 
@@ -12,6 +13,7 @@ export default class ListToolkitPlugin extends Plugin {
 	async onload(): Promise<void> {
 		await this.loadSettings();
 		for (const feature of FEATURES) feature.load(this);
+		this.addSettingTab(new ListToolkitSettingTab(this.app, this));
 	}
 
 	async loadSettings(): Promise<void> {
