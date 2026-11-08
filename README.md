@@ -26,7 +26,6 @@ More list tools will follow as separate features.
 - **Drag list items on desktop:** off by default, since on desktop the Outliner plugin can already drag items with the mouse. When on, the handle works with the mouse the same way.
 - **Fit pasted lists to the item:** on by default.
 
-
 ## Installation
 
 The plugin is not in the community catalog yet.
