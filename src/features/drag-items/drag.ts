@@ -1,7 +1,7 @@
 import { indentUnit } from '@codemirror/language';
 import { EditorState, Range, StateEffect, StateField } from '@codemirror/state';
 import { Decoration, DecorationSet, EditorView } from '@codemirror/view';
-import { Lines, indentWidth } from '../../lib/list-parse';
+import { Lines, indentWidth, quotePrefix, requote, unquotedLines } from '../../lib/list-parse';
 import {
 	allowedLevels,
 	buildListModel,
@@ -91,18 +91,21 @@ export class DragSession {
 
 	static start(view: EditorView, line: number, event: PointerEvent, onEnd: () => void): DragSession | null {
 		const state = view.state;
-		const lines = docLines(state);
+		const prefix = quotePrefix(state.doc.line(line + 1).text);
+		const lines = unquotedLines(docLines(state), prefix);
 		const model = buildListModel(lines, line, state.tabSize);
 		if (!model) return null;
 		const block = findBlock(lines, model, line);
 		const item = itemAt(model, line);
 		if (!block || !item) return null;
-		return new DragSession(view, lines, model, block, item, event, onEnd);
+		return new DragSession(view, lines, prefix, model, block, item, event, onEnd);
 	}
 
 	private constructor(
 		private readonly view: EditorView,
 		lines: Lines,
+		/** Quote or callout prefix of the list lines (`> `), empty for a plain list. */
+		private readonly prefix: string,
 		model: ListModel,
 		block: LineRange,
 		item: ModelItem,
@@ -156,15 +159,16 @@ export class DragSession {
 		const doc = this.view.state.doc;
 		const from = doc.line(result.from + 1).from;
 		const to = doc.line(result.to).to;
+		const output = result.lines.map((text) => requote(text, this.prefix));
 		let anchor: number | undefined;
 		if (result.cursor) {
-			anchor = from + result.cursor.ch;
+			anchor = from + this.prefix.length + result.cursor.ch;
 			for (let index = 0; index < result.cursor.line - result.from; index++) {
-				anchor += (result.lines[index] ?? '').length + 1;
+				anchor += (output[index] ?? '').length + 1;
 			}
 		}
 		this.finish({
-			changes: { from, to, insert: result.lines.join('\n') },
+			changes: { from, to, insert: output.join('\n') },
 			selection: anchor === undefined ? undefined : { anchor },
 			userEvent: 'move.drop',
 		});
@@ -199,7 +203,7 @@ export class DragSession {
 		const doc = this.view.state.doc;
 		const item = itemAt(this.model, line);
 		if (!item || line >= doc.lines) return null;
-		return this.view.coordsAtPos(doc.line(line + 1).from + item.indent.length, 1)?.left ?? null;
+		return this.view.coordsAtPos(doc.line(line + 1).from + this.prefix.length + item.indent.length, 1)?.left ?? null;
 	}
 
 	/** Where each level starts on screen: measured from visible items of different levels where possible. */
@@ -234,7 +238,7 @@ export class DragSession {
 	private cursor(): { line: number; ch: number } | null {
 		const head = this.view.state.selection.main.head;
 		const line = this.view.state.doc.lineAt(head);
-		return { line: line.number - 1, ch: head - line.from };
+		return { line: line.number - 1, ch: Math.max(0, head - line.from - this.prefix.length) };
 	}
 
 	/** Finds the drop place under the finger and draws the indicator line there. */

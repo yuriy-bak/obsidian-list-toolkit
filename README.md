@@ -14,7 +14,7 @@ Outliner drags list items only on desktop; on a phone there are only the "Move u
 
 ## Features
 
-- **Drag list items:** put the cursor in a list item and a handle appears left of it. Drag the handle to move the item with all its sub-items and continuation lines; a line shows where it goes. Move the finger right or left to nest the item deeper or move it out, up to one level below the item above. The editor scrolls by itself near its top and bottom edges. Works with `-`, `*`, `+`, numbered items and checkboxes, tabs or spaces, in Live Preview and source mode. One undo brings everything back. To cancel, release on the original place or outside the editor, or touch the screen with a second finger. No handle in code blocks, frontmatter, tables and callouts. Numbers of numbered items are not renumbered.
+- **Drag list items:** put the cursor in a list item and a handle appears left of it. Drag the handle to move the item with all its sub-items and continuation lines; a line shows where it goes. Move the finger right or left to nest the item deeper or move it out, up to one level below the item above. The editor scrolls by itself near its top and bottom edges. Works with `-`, `*`, `+`, numbered items and checkboxes, tabs or spaces, in Live Preview and source mode. One undo brings everything back. To cancel, release on the original place or outside the editor, or touch the screen with a second finger. Lists inside callouts and quotes (`> - item`) work too. No handle in code blocks, frontmatter and tables. Numbers of numbered items are not renumbered.
 
 ## Settings
 

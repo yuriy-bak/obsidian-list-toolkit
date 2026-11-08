@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { linesOf } from '../src/lib/list-parse';
+import { linesOf, quotePrefix, requote, unquotedLines } from '../src/lib/list-parse';
 import {
 	allowedLevels,
 	buildListModel,
@@ -161,4 +161,26 @@ test('nearest gap skips gaps that are not allowed', () => {
 	assert.equal(nearestGap(model, block, 1, true), 0);
 	assert.equal(nearestGap(model, block, 1, false), 2);
 	assert.equal(nearestGap(model, block, 2, false), 3);
+});
+
+test('lists inside callouts move with the prefix kept', () => {
+	const note = ['> [!note]', '> - a', '> \t- a1', '> - b', '>', '> - c', 'After'];
+	const prefix = quotePrefix(note[3]!);
+	assert.equal(prefix, '> ');
+	const lines = unquotedLines(linesOf(note), prefix);
+	const model = buildListModel(lines, 3, TAB)!;
+	assert.deepEqual(model.region, { start: 1, end: 6 });
+	const block = findBlock(lines, model, 1)!;
+	assert.deepEqual(block, { start: 1, end: 3 });
+	const result = computeMove(lines, model, block, 6, 0, detectIndentUnit(model, '\t'))!;
+	const out = [...note.slice(0, result.from), ...result.lines.map((text) => requote(text, prefix)), ...note.slice(result.to)];
+	assert.deepEqual(out, ['> [!note]', '> - b', '>', '> - c', '> - a', '> \t- a1', 'After']);
+});
+
+test('a nested quote ends the outer list', () => {
+	const note = ['> - a', '> > - inner', '> - b'];
+	const lines = unquotedLines(linesOf(note), '> ');
+	assert.deepEqual(buildListModel(lines, 0, TAB)?.region, { start: 0, end: 1 });
+	assert.equal(quotePrefix(note[1]!), '> > ');
+	assert.equal(quotePrefix('- a'), '');
 });
