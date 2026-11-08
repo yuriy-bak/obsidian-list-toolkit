@@ -4,6 +4,7 @@ import { EditorView, PluginValue, ViewPlugin, ViewUpdate } from '@codemirror/vie
 import { setIcon } from 'obsidian';
 import { parseListItem } from '../../lib/list-parse';
 import { t } from '../../i18n';
+import { DragSession, toScroller } from './drag';
 
 /** Size of the touch area of the handle, px. The icon inside is smaller. */
 export const HANDLE_SIZE = 32;
@@ -40,12 +41,6 @@ interface HandlePlace {
 	left: number;
 }
 
-/** Converts viewport coordinates to coordinates inside the editor's scroll container. */
-export function toScroller(view: EditorView, x: number, y: number): { x: number; y: number } {
-	const box = view.scrollDOM.getBoundingClientRect();
-	return { x: x - box.left + view.scrollDOM.scrollLeft, y: y - box.top + view.scrollDOM.scrollTop };
-}
-
 /**
  * Draws the drag handle left of the list marker of the cursor line. The handle is an absolutely positioned
  * element in the scroll container, not a widget inside the line: Live Preview replaces list markers with
@@ -57,14 +52,88 @@ export class HandleView implements PluginValue {
 	line: number | null = null;
 	/** While a drag is in progress, the handle keeps its line and position. */
 	frozen = false;
+	private session: DragSession | null = null;
+	private pointerId: number | null = null;
 
 	constructor(readonly view: EditorView) {
 		this.dom = view.scrollDOM.createDiv({ cls: 'list-toolkit-handle', attr: { 'aria-label': t('dragHandle') } });
 		setIcon(this.dom, 'grip-vertical');
+		this.dom.addEventListener('pointerdown', this.onPointerDown);
+		this.dom.addEventListener('pointermove', this.onPointerMove);
+		this.dom.addEventListener('pointerup', this.onPointerUp);
+		this.dom.addEventListener('pointercancel', this.onCancel);
+		this.dom.addEventListener('lostpointercapture', this.onCancel);
+		// Keep the editor from taking focus (and the phone from opening the keyboard) on a touch of the handle.
+		for (const type of ['mousedown', 'touchstart', 'contextmenu'] as const) {
+			this.dom.addEventListener(type, this.swallow, { passive: false });
+		}
+		this.schedule();
+	}
+
+	private readonly swallow = (event: Event): void => {
+		event.preventDefault();
+		event.stopPropagation();
+	};
+
+	private readonly onPointerDown = (event: PointerEvent): void => {
+		this.swallow(event);
+		if (this.session || this.line === null || event.button > 0) return;
+		const session = DragSession.start(this.view, this.line - 1, event, () => this.endSession());
+		if (!session) return;
+		this.session = session;
+		this.pointerId = event.pointerId;
+		this.frozen = true;
+		this.dom.addClass('is-active');
+		this.dom.setPointerCapture(event.pointerId);
+		// A second finger or Escape cancels the drag.
+		activeDocument.addEventListener('pointerdown', this.onOtherPointer, true);
+		activeDocument.addEventListener('keydown', this.onKey, true);
+	};
+
+	private readonly onPointerMove = (event: PointerEvent): void => {
+		if (event.pointerId !== this.pointerId) return;
+		this.swallow(event);
+		this.session?.move(event);
+	};
+
+	private readonly onPointerUp = (event: PointerEvent): void => {
+		if (event.pointerId !== this.pointerId) return;
+		this.swallow(event);
+		this.session?.drop(event);
+	};
+
+	private readonly onCancel = (): void => {
+		this.session?.cancel();
+	};
+
+	private readonly onOtherPointer = (event: PointerEvent): void => {
+		if (event.pointerId !== this.pointerId) this.session?.cancel();
+	};
+
+	private readonly onKey = (event: KeyboardEvent): void => {
+		if (event.key !== 'Escape') return;
+		this.swallow(event);
+		this.session?.cancel();
+	};
+
+	private endSession(): void {
+		activeDocument.removeEventListener('pointerdown', this.onOtherPointer, true);
+		activeDocument.removeEventListener('keydown', this.onKey, true);
+		if (this.pointerId !== null && this.dom.hasPointerCapture(this.pointerId)) {
+			this.dom.releasePointerCapture(this.pointerId);
+		}
+		this.session = null;
+		this.pointerId = null;
+		this.frozen = false;
+		this.dom.removeClass('is-active');
 		this.schedule();
 	}
 
 	update(update: ViewUpdate): void {
+		// A change from elsewhere (sync, another pane) makes the drag plan stale.
+		if (this.session && update.docChanged && !update.transactions.some((tr) => tr.isUserEvent('move.drop'))) {
+			this.session.cancel();
+		}
 		if (this.frozen) return;
 		if (update.selectionSet || update.docChanged || update.geometryChanged || update.viewportChanged) {
 			this.schedule();
@@ -106,6 +175,7 @@ export class HandleView implements PluginValue {
 	}
 
 	destroy(): void {
+		this.session?.cancel();
 		this.dom.remove();
 	}
 }

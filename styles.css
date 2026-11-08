@@ -31,3 +31,42 @@
 .list-toolkit-handle.is-active {
 	color: var(--interactive-accent);
 }
+
+.list-toolkit-indicator {
+	position: absolute;
+	top: var(--list-toolkit-indicator-top, 0);
+	left: var(--list-toolkit-indicator-left, 0);
+	z-index: 5;
+	display: none;
+	width: var(--list-toolkit-indicator-width, 0);
+	height: 2px;
+	margin-top: -1px;
+	border-radius: 1px;
+	background-color: var(--interactive-accent);
+	pointer-events: none;
+}
+
+.list-toolkit-indicator::before {
+	content: "";
+	position: absolute;
+	top: -3px;
+	left: -4px;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background-color: var(--interactive-accent);
+}
+
+.list-toolkit-indicator.is-visible {
+	display: block;
+}
+
+.list-toolkit-dragged {
+	opacity: 0.4;
+}
+
+.list-toolkit-dragging {
+	cursor: grabbing;
+	user-select: none;
+	-webkit-user-select: none;
+}
